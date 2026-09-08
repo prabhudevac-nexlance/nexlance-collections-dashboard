@@ -34,6 +34,54 @@ export const INITIAL_CLIENTS: Client[] = [
 ];
 
 export const INITIAL_USERS: User[] = [
+  // Developer Team
+  {
+    agent_id: 'USR_DEV01',
+    name: 'Rahul A (Dev Lead)',
+    email: 'rahul.a@nexlance.co.in',
+    role: 'FOUNDER',
+    client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
+    doj: '2024-01-01',
+    active_flag: true,
+    first_login: false,
+    totp_enabled: true,
+    totp_secret: 'NEXLANCE2026SECRET',
+  },
+  {
+    agent_id: 'USR_DEV02',
+    name: 'Hari Krishna (Dev)',
+    email: 'hari.krishna@nexlance.co.in',
+    role: 'FOUNDER',
+    client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
+    doj: '2024-01-01',
+    active_flag: true,
+    first_login: false,
+    totp_enabled: true,
+  },
+  {
+    agent_id: 'USR_DEV03',
+    name: 'Shaik J (Dev)',
+    email: 'shaik.j@nexlance.co.in',
+    role: 'OPS_MANAGER',
+    client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
+    doj: '2024-01-01',
+    active_flag: true,
+    first_login: false,
+    totp_enabled: true,
+  },
+  {
+    agent_id: 'USR_DEV04',
+    name: 'Sudharshan Reddy (Dev)',
+    email: 'sudharshan.reddy@nexlance.co.in',
+    role: 'FOUNDER',
+    client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
+    doj: '2024-01-01',
+    active_flag: true,
+    first_login: false,
+    totp_enabled: true,
+  },
+
+  // Management & Ops Team
   {
     agent_id: 'USR_FOUNDER',
     name: 'Karthick Founder',

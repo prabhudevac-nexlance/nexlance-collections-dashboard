@@ -9,18 +9,11 @@ lerna-debug.log*
 
 node_modules
 dist
-dist-ssr
+dist-isolation
+.DS_Store
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-.vercel
+# Environment variables
+.env
+.env.local
+.env.*.local

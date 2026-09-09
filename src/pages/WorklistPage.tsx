@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { PhoneMasker } from '../components/common/PhoneMasker';
-import { PhoneCall, AlertCircle, CheckCircle2, History, ChevronRight, ChevronLeft } from 'lucide-react';
+import { PhoneCall, AlertCircle, CheckCircle2, History, ChevronRight, ChevronLeft, Sparkles, Loader2 } from 'lucide-react';
 import type { ContactMode, DispositionCode } from '../types';
+import { generateAiCallRemarks } from '../services/aiService';
 
 export const WorklistPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -50,6 +51,7 @@ export const WorklistPage: React.FC = () => {
   const [promisedDate, setPromisedDate] = useState('');
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const contactableCodes: DispositionCode[] = [
     'PTP Taken',
@@ -77,6 +79,26 @@ export const WorklistPage: React.FC = () => {
     'Relocated',
     'Legal Notice Requested',
   ];
+
+  const handleGenerateAiRemarks = async () => {
+    if (!activeAccount) return;
+    setIsAiLoading(true);
+    try {
+      const summary = await generateAiCallRemarks({
+        borrowerName: activeAccount.borrower_name,
+        dispositionCode,
+        contactMode,
+        promisedAmount,
+        promisedDate,
+      });
+      setRemarks(summary);
+      setFormError('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   const handleSaveDisposition = (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,12 +363,34 @@ export const WorklistPage: React.FC = () => {
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Activity Remarks (Free Text)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-gray-600">
+                      Activity Remarks (Free Text) <span className="text-rose-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiRemarks}
+                      disabled={isAiLoading}
+                      className="text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-lg transition-all flex items-center space-x-1.5 shadow-sm"
+                    >
+                      {isAiLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
+                          <span>Generating AI Remarks...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                          <span>⚡ Auto-Generate AI Remarks</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     rows={3}
                     value={remarks}
                     onChange={e => setRemarks(e.target.value)}
-                    placeholder="Enter detailed call summary, borrower response, or commitment details..."
+                    placeholder="Enter detailed call summary, borrower response, or click '⚡ Auto-Generate AI Remarks'..."
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   ></textarea>
                 </div>

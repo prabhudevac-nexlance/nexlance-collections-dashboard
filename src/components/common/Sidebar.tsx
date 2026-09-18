@@ -66,9 +66,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className="w-64 bg-slate-950 border-r border-indigo-950 text-slate-200 flex flex-col justify-between flex-shrink-0 min-h-[calc(100vh-61px)] shadow-xl">
+    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 text-zinc-200 flex flex-col justify-between flex-shrink-0 min-h-[calc(100vh-61px)] shadow-2xl">
       <div className="p-4 space-y-1">
-        <div className="px-3 py-2 text-[11px] font-bold text-indigo-400/80 uppercase tracking-widest">
+        <div className="px-3 py-2 text-[11px] font-bold text-amber-500/80 uppercase tracking-widest">
           Main Navigation
         </div>
         {navItems.map(item => {
@@ -84,18 +84,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 transform active:scale-95 ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/40 font-semibold scale-[1.02]'
-                  : 'text-slate-400 hover:bg-slate-800/80 hover:text-white hover:translate-x-1'
+                  ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md shadow-amber-950/60 font-bold scale-[1.02]'
+                  : 'text-zinc-400 hover:bg-zinc-900 hover:text-amber-300 hover:translate-x-1'
               }`}
             >
               <div className="flex items-center space-x-3">
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
                 <span>{item.label}</span>
               </div>
               {item.badge && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                    isActive ? 'bg-blue-800 text-blue-100' : 'bg-slate-800 text-blue-400 border border-blue-900'
+                    isActive ? 'bg-amber-900 text-amber-100' : 'bg-zinc-900 text-amber-400 border border-amber-900/60'
                   }`}
                 >
                   {item.badge}

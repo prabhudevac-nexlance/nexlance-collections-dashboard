@@ -23,20 +23,20 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white border-b border-indigo-900/60 px-6 py-3 flex items-center justify-between shadow-lg relative z-30">
+    <header className="bg-gradient-to-r from-zinc-950 via-stone-900 to-zinc-900 text-white border-b border-amber-600/40 px-6 py-3 flex items-center justify-between shadow-xl relative z-30">
       {/* Brand with Official Nexlance Logo */}
       <div className="flex items-center space-x-3">
-        <div className="p-1.5 bg-slate-900/90 rounded-xl border border-indigo-700/60 shadow-lg flex items-center justify-center animate-pulse-glow">
+        <div className="p-1.5 bg-zinc-900/90 rounded-xl border border-amber-500/50 shadow-lg flex items-center justify-center animate-pulse-glow">
           <img src={logoImg} alt="Nexlance Logo" className="w-8.5 h-8.5 object-contain drop-shadow-md animate-float-logo" />
         </div>
         <div>
           <h1 className="font-bold text-lg tracking-tight text-white flex items-center gap-2">
             Nexlance Collections System
-            <span className="bg-gradient-to-r from-blue-900 to-indigo-900 text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-600/50 shadow-sm">
-              Royal Enterprise v1.0
+            <span className="bg-gradient-to-r from-amber-600/30 to-amber-700/30 text-amber-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-amber-500/50 shadow-sm">
+              Executive Amber v1.0
             </span>
           </h1>
-          <p className="text-xs text-indigo-200/70">NBFC Allocation • Agent Worklist • PTP Recon • Audit Trail</p>
+          <p className="text-xs text-amber-200/70">NBFC Allocation • Agent Worklist • PTP Recon • Audit Trail</p>
         </div>
       </div>
 

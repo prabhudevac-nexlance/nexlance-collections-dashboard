@@ -43,7 +43,9 @@ const MainLayout: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <main className="flex-1 p-8 overflow-y-auto max-h-[calc(100vh-61px)]">
-          {renderContent()}
+          <div key={activeTab} className="animate-fade-in-up">
+            {renderContent()}
+          </div>
         </main>
       </div>
       <LoginModal />

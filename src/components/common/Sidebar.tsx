@@ -66,9 +66,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col justify-between flex-shrink-0 min-h-[calc(100vh-61px)]">
+    <aside className="w-64 bg-slate-950 border-r border-indigo-950 text-slate-200 flex flex-col justify-between flex-shrink-0 min-h-[calc(100vh-61px)] shadow-xl">
       <div className="p-4 space-y-1">
-        <div className="px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-2 text-[11px] font-bold text-indigo-400/80 uppercase tracking-widest">
           Main Navigation
         </div>
         {navItems.map(item => {
@@ -82,10 +82,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium text-sm transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 transform active:scale-95 ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/40 font-semibold'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/40 font-semibold scale-[1.02]'
+                  : 'text-slate-400 hover:bg-slate-800/80 hover:text-white hover:translate-x-1'
               }`}
             >
               <div className="flex items-center space-x-3">

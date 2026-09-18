@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Lock, KeyRound, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { KeyRound, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 export const LoginModal: React.FC = () => {
   const {
@@ -84,8 +84,8 @@ export const LoginModal: React.FC = () => {
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-white">
         <div className="bg-gradient-to-r from-blue-900 to-slate-900 p-6 border-b border-slate-800 text-center">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30">
-            <Lock className="w-6 h-6 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-slate-800/80 p-2 border border-slate-700/80 flex items-center justify-center mx-auto mb-3 shadow-lg">
+            <img src="./logo.png" alt="Nexlance Logo" className="w-full h-full object-contain drop-shadow" />
           </div>
           <h2 className="text-xl font-bold text-white">Nexlance Security Gateway</h2>
           <p className="text-xs text-slate-400 mt-1">

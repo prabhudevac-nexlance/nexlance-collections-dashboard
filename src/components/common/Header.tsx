@@ -23,10 +23,10 @@ export const Header: React.FC = () => {
 
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 px-6 py-3 flex items-center justify-between shadow-md">
-      {/* Brand */}
+      {/* Brand with Nexlance Logo */}
       <div className="flex items-center space-x-3">
-        <div className="bg-blue-600 p-2 rounded-lg text-white font-bold text-lg tracking-wider flex items-center justify-center">
-          NX
+        <div className="p-1 bg-slate-800/80 rounded-xl border border-slate-700/60 shadow flex items-center justify-center">
+          <img src="./logo.png" alt="Nexlance Logo" className="w-9 h-9 object-contain drop-shadow" />
         </div>
         <div>
           <h1 className="font-bold text-lg tracking-tight text-white flex items-center gap-2">

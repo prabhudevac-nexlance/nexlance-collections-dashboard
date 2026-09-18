@@ -34,12 +34,26 @@ export const INITIAL_CLIENTS: Client[] = [
 ];
 
 export const INITIAL_USERS: User[] = [
-  // Developer Team
+  // Executive Founder
+  {
+    agent_id: 'USR_FOUNDER',
+    name: 'Karthik (Founder)',
+    email: 'karthik@nexlance.co.in',
+    role: 'FOUNDER',
+    client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
+    doj: '2024-01-01',
+    active_flag: true,
+    first_login: false,
+    totp_enabled: true,
+    totp_secret: 'NEXLANCE2026SECRET',
+  },
+
+  // Operations & Engineering Team
   {
     agent_id: 'USR_DEV01',
     name: 'Rahul A (Dev Lead)',
     email: 'rahul.a@nexlance.co.in',
-    role: 'FOUNDER',
+    role: 'OPS_MANAGER',
     client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
     doj: '2024-01-01',
     active_flag: true,
@@ -49,9 +63,9 @@ export const INITIAL_USERS: User[] = [
   },
   {
     agent_id: 'USR_DEV02',
-    name: 'Hari Krishna (Dev)',
+    name: 'Hari Krishna (Dev Lead)',
     email: 'hari.krishna@nexlance.co.in',
-    role: 'FOUNDER',
+    role: 'OPS_MANAGER',
     client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
     doj: '2024-01-01',
     active_flag: true,
@@ -73,26 +87,12 @@ export const INITIAL_USERS: User[] = [
     agent_id: 'USR_DEV04',
     name: 'Sudharshan Reddy (Dev)',
     email: 'sudharshan.reddy@nexlance.co.in',
-    role: 'FOUNDER',
+    role: 'OPS_MANAGER',
     client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
     doj: '2024-01-01',
     active_flag: true,
     first_login: false,
     totp_enabled: true,
-  },
-
-  // Management & Ops Team
-  {
-    agent_id: 'USR_FOUNDER',
-    name: 'Karthick Founder',
-    email: 'karthick@nexlance.in',
-    role: 'FOUNDER',
-    client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
-    doj: '2024-01-01',
-    active_flag: true,
-    first_login: false,
-    totp_enabled: true,
-    totp_secret: 'NEXLANCE2026SECRET',
   },
   {
     agent_id: 'USR_OPS01',

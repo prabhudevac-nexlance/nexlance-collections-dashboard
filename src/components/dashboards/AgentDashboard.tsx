@@ -13,34 +13,27 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
 
   const today = new Date().toISOString().split('T')[0];
 
-  // My allocations
   const myAllocations = allocations.filter(a => a.assigned_agent_id === currentUser.agent_id);
   const totalAssigned = myAllocations.length;
 
-  // Touched today
   const myActivitiesToday = activityLogs.filter(
     act => act.agent_id === currentUser.agent_id && act.timestamp.startsWith(today)
   );
   const touchedTodayCount = new Set(myActivitiesToday.map(act => act.allocation_id)).size;
 
-  // Connected today (contactable disposition)
   const connectedTodayCount = myActivitiesToday.filter(
     act => !['Ringing No Answer', 'Switched Off', 'Number Invalid', 'Number Busy', 'Wrong Number', 'Not Reachable'].includes(act.disposition_code)
   ).length;
 
-  // PTP Taken Today
   const ptpTakenToday = myActivitiesToday.filter(act => act.disposition_code === 'PTP Taken').length;
 
-  // PTP Due Today
   const myPtps = ptpRecords.filter(p => p.agent_id === currentUser.agent_id);
   const ptpDueTodayCount = myPtps.filter(p => p.promised_date === today && p.ptp_status === 'Open').length;
 
-  // PTP Kept %
   const totalCompletedPtps = myPtps.filter(p => p.ptp_status === 'Kept' || p.ptp_status === 'Broken').length;
   const keptPtps = myPtps.filter(p => p.ptp_status === 'Kept').length;
   const ptpKeptPercentage = totalCompletedPtps > 0 ? Math.round((keptPtps / totalCompletedPtps) * 100) : 100;
 
-  // Collections credited to me this month
   const myAllocIds = new Set(myAllocations.map(a => a.allocation_id));
   const myPayments = payments.filter(p => {
     const alloc = allocations.find(a => a.client_id === p.client_id && a.loan_id.toUpperCase() === p.loan_id.toUpperCase());
@@ -49,9 +42,9 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
   const totalCreditedAmount = myPayments.reduce((sum, p) => sum + p.payment_amount, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-xl p-6 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Top Banner with Pulse Glow */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-blue-800/40">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Agent Workspace • {currentUser.name}</h2>
           <p className="text-blue-200 text-sm mt-1">
@@ -60,9 +53,9 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
         </div>
         <button
           onClick={onGoToWorklist}
-          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center space-x-2 text-sm"
+          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-emerald-500/30 transition-all transform hover:-translate-y-0.5 flex items-center space-x-2 text-sm cursor-pointer"
         >
-          <PhoneCall className="w-4 h-4" />
+          <PhoneCall className="w-4 h-4 animate-bounce" />
           <span>Launch Priority Worklist Queue</span>
           <ArrowRight className="w-4 h-4" />
         </button>
@@ -70,8 +63,8 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm card-hover-effect flex items-center space-x-4">
+          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shadow-inner">
             <PhoneCall className="w-6 h-6" />
           </div>
           <div>
@@ -80,8 +73,8 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-lg">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm card-hover-effect flex items-center space-x-4">
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl shadow-inner">
             <Clock className="w-6 h-6" />
           </div>
           <div>
@@ -90,8 +83,8 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm card-hover-effect flex items-center space-x-4">
+          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl shadow-inner">
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
@@ -100,8 +93,8 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm card-hover-effect flex items-center space-x-4">
+          <div className="p-3 bg-purple-100 text-purple-600 rounded-xl shadow-inner">
             <Calendar className="w-6 h-6" />
           </div>
           <div>
@@ -113,11 +106,11 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: PTP Due Today */}
-        <div className="bg-white p-6 rounded-xl border border-amber-200 shadow-sm bg-gradient-to-br from-white to-amber-50/30">
+        <div className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm card-hover-effect bg-gradient-to-br from-white to-amber-50/40">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Action Required</span>
-            <span className="p-1.5 bg-amber-100 text-amber-700 rounded-full">
-              <Calendar className="w-4 h-4" />
+            <span className="p-2 bg-amber-100 text-amber-700 rounded-full shadow-sm">
+              <Calendar className="w-4 h-4 animate-pulse" />
             </span>
           </div>
           <div className="text-3xl font-extrabold text-gray-900">{ptpDueTodayCount}</div>
@@ -128,10 +121,10 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
         </div>
 
         {/* Card 2: My PTP Kept Rate */}
-        <div className="bg-white p-6 rounded-xl border border-blue-200 shadow-sm bg-gradient-to-br from-white to-blue-50/30">
+        <div className="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm card-hover-effect bg-gradient-to-br from-white to-blue-50/40">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Quality Score</span>
-            <span className="p-1.5 bg-blue-100 text-blue-700 rounded-full">
+            <span className="p-2 bg-blue-100 text-blue-700 rounded-full shadow-sm">
               <TrendingUp className="w-4 h-4" />
             </span>
           </div>
@@ -143,10 +136,10 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onGoToWorklist }
         </div>
 
         {/* Card 3: Credited Collections */}
-        <div className="bg-white p-6 rounded-xl border border-emerald-200 shadow-sm bg-gradient-to-br from-white to-emerald-50/30">
+        <div className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm card-hover-effect bg-gradient-to-br from-white to-emerald-50/40">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Monthly Revenue</span>
-            <span className="p-1.5 bg-emerald-100 text-emerald-700 rounded-full">
+            <span className="p-2 bg-emerald-100 text-emerald-700 rounded-full shadow-sm">
               <DollarSign className="w-4 h-4" />
             </span>
           </div>

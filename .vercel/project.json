@@ -1,1 +1,16 @@
-{"projectId":"prj_soXp0AUFaxgGqKt56ojH6qwlQJTS","orgId":"team_LO38TIYvqR3tzPzWXDxHGN1o","projectName":"nexlance-collections-dashboard"}
+{
+  "projectId": "prj_soXp0AUFaxgGqKt56ojH6qwlQJTS",
+  "orgId": "team_LO38TIYvqR3tzPzWXDxHGN1o",
+  "projectName": "nexlance-collections-dashboard",
+  "settings": {
+    "createdAt": 1788841060852,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

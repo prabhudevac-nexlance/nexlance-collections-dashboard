@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ShieldCheck, LogOut, RefreshCw, AlertTriangle } from 'lucide-react';
 import type { UserRole } from '../../types';
+import logoImg from '../../assets/logo.png';
 
 export const Header: React.FC = () => {
   const { currentUser, users, switchUser, logout, isTotpVerified } = useAuth();
@@ -23,10 +24,10 @@ export const Header: React.FC = () => {
 
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 px-6 py-3 flex items-center justify-between shadow-md relative z-30">
-      {/* Brand with Animated Floating Nexlance Logo */}
+      {/* Brand with Official Nexlance Logo */}
       <div className="flex items-center space-x-3">
         <div className="p-1.5 bg-slate-800/90 rounded-xl border border-slate-700/80 shadow-md flex items-center justify-center animate-pulse-glow">
-          <img src="./logo.png" alt="Nexlance Logo" className="w-8 h-8 object-contain drop-shadow animate-float-logo" />
+          <img src={logoImg} alt="Nexlance Logo" className="w-8 h-8 object-contain drop-shadow animate-float-logo" />
         </div>
         <div>
           <h1 className="font-bold text-lg tracking-tight text-white flex items-center gap-2">

@@ -37,7 +37,7 @@ export const LoginModal: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    const res = login(email || currentUser.email, password || 'password123');
+    const res = login(email || currentUser?.email || 'karthik@nexlance.co.in', password || 'password123');
     if (!res.success) {
       setError(res.message);
       return;

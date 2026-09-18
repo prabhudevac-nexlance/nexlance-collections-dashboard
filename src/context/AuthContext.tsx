@@ -24,14 +24,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('nexlance_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    try {
+      const saved = localStorage.getItem('nexlance_users');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Ensure Karthik is founder in loaded data if exists
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse saved users:', e);
+    }
+    return INITIAL_USERS;
   });
 
   const [currentUser, setCurrentUser] = useState<User>(() => {
-    const savedId = localStorage.getItem('nexlance_current_user_id');
-    const found = users.find(u => u.agent_id === savedId);
-    return found || users[0]; // Default Founder
+    try {
+      const savedId = localStorage.getItem('nexlance_current_user_id');
+      const found = users?.find(u => u?.agent_id === savedId);
+      if (found) return found;
+    } catch (e) {
+      console.error('Failed to parse current user:', e);
+    }
+    return users?.[0] || INITIAL_USERS[0];
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);

@@ -17,7 +17,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const { currentUser } = useAuth();
-  const role = currentUser.role;
+  const role = currentUser?.role || 'FOUNDER';
 
   const navItems = [
     {

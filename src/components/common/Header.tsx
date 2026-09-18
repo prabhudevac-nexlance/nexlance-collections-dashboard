@@ -60,11 +60,11 @@ export const Header: React.FC = () => {
           <RefreshCw className="w-4 h-4 text-blue-400 animate-spin-slow" />
           <span className="text-xs text-slate-300 font-medium">Switch Active Role:</span>
           <select
-            value={currentUser.agent_id}
+            value={currentUser?.agent_id || ''}
             onChange={e => switchUser(e.target.value)}
             className="bg-slate-900 text-white text-xs font-semibold rounded px-2 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-all hover:bg-slate-950"
           >
-            {users.map(u => (
+            {users?.map(u => (
               <option key={u.agent_id} value={u.agent_id}>
                 {u.name} ({u.role})
               </option>
@@ -75,14 +75,14 @@ export const Header: React.FC = () => {
         {/* User Badge */}
         <div className="flex items-center space-x-3 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 shadow-sm transition-all hover:bg-slate-800">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold flex items-center justify-center text-sm shadow">
-            {currentUser.name.charAt(0)}
+            {currentUser?.name ? currentUser.name.charAt(0) : 'K'}
           </div>
           <div className="text-left">
             <div className="text-xs font-semibold text-white flex items-center gap-1.5">
-              {currentUser.name}
-              {getRoleBadge(currentUser.role)}
+              {currentUser?.name || 'Karthik (Founder)'}
+              {currentUser?.role ? getRoleBadge(currentUser.role) : null}
             </div>
-            <div className="text-[10px] text-slate-400 font-mono">{currentUser.email}</div>
+            <div className="text-[10px] text-slate-400 font-mono">{currentUser?.email || 'karthik@nexlance.co.in'}</div>
           </div>
         </div>
 

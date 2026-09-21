@@ -7,7 +7,7 @@
     "build",
     "--prod"
   ],
-  "cliVersion": "59.23.1",
+  "cliVersion": "59.23.2",
   "detectedFramework": {
     "status": "skipped"
   },

@@ -49,14 +49,15 @@ export const INITIAL_USERS: User[] = [
   },
   {
     agent_id: 'USR_KARTHICK',
-    name: 'Karthick (Ops Executive)',
+    name: 'Karthick (Founder)',
     email: 'karthick@nexlance.co.in',
-    role: 'OPS_MANAGER',
+    role: 'FOUNDER',
     client_ids_assigned: ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
     doj: '2024-01-01',
     active_flag: true,
     first_login: false,
     totp_enabled: true,
+    totp_secret: 'NEXLANCEAUTHKEY2',
   },
 
   // Active Agents

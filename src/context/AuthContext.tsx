@@ -51,8 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (u.agent_id === 'USR_FOUNDER') {
             return { ...u, role: 'FOUNDER', name: 'Prabhudeva C (Founder & CEO)', email: 'prabhudeva.c@nexlance.co.in' };
           }
-          if (u.agent_id !== 'USR_FOUNDER' && u.role === 'FOUNDER') {
-            return { ...u, role: 'OPS_MANAGER' };
+          if (u.agent_id === 'USR_KARTHICK') {
+            return { ...u, role: 'FOUNDER', name: 'Karthick (Founder)', email: 'karthick@nexlance.co.in' };
           }
           return u;
         });

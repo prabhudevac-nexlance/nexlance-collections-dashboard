@@ -60,10 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         list = INITIAL_USERS;
       }
     }
-    // Allowed agent emails
-    const allowedAgentEmails = new Set([
+    // Allowed user emails
+    const allowedEmails = new Set([
       'prabhudeva.c@nexlance.co.in',
-      'chinnakotlaprabhudeva651@gmail.com',
+      'karthick@nexlance.co.in',
       'b.praveen@nexlance.co.in',
       'chaithanya@nexlance.co.in',
       'geetha.m@nexlance.co.in',
@@ -72,10 +72,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'k.prasad@nexlance.co.in',
     ]);
 
-    // Filter list: Keep non-agents, and only keep allowed agents
-    list = list.filter(u => u.role !== 'AGENT' || allowedAgentEmails.has(u.email.toLowerCase()));
+    // Filter list: Keep only allowed users
+    list = list.filter(u => allowedEmails.has(u.email.toLowerCase()));
 
-    // Merge any missing agents from INITIAL_USERS
+    // Merge any missing users from INITIAL_USERS
     INITIAL_USERS.forEach(initUser => {
       if (!list.some(u => u.email.toLowerCase() === initUser.email.toLowerCase())) {
         list.push(initUser);

@@ -78,26 +78,40 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, addAuditLog } = useAuth();
 
-  const safeParse = <T,>(key: string, fallback: T): T => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed as T;
-      }
-    } catch (e) {
-      console.error(`Failed to parse ${key} from localStorage`, e);
-    }
-    return fallback;
-  };
+  const [clients, setClients] = useState<Client[]>(() => {
+    const saved = localStorage.getItem('nexlance_clients');
+    return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
+  });
 
-  const [clients, setClients] = useState<Client[]>(() => safeParse('nexlance_clients', INITIAL_CLIENTS));
-  const [batches, setBatches] = useState<AllocationBatch[]>(() => safeParse('nexlance_batches', INITIAL_BATCHES));
-  const [allocations, setAllocations] = useState<Allocation[]>(() => safeParse('nexlance_allocations', INITIAL_ALLOCATIONS));
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => safeParse('nexlance_activity_logs', INITIAL_ACTIVITY_LOGS));
-  const [ptpRecords, setPtpRecords] = useState<PTPRecord[]>(() => safeParse('nexlance_ptp_records', INITIAL_PTPS));
-  const [payments, setPayments] = useState<PaymentRecord[]>(() => safeParse('nexlance_payments', INITIAL_PAYMENTS));
-  const [exceptions, setExceptions] = useState<ExceptionPayment[]>(() => safeParse('nexlance_exceptions', INITIAL_EXCEPTIONS));
+  const [batches, setBatches] = useState<AllocationBatch[]>(() => {
+    const saved = localStorage.getItem('nexlance_batches');
+    return saved ? JSON.parse(saved) : INITIAL_BATCHES;
+  });
+
+  const [allocations, setAllocations] = useState<Allocation[]>(() => {
+    const saved = localStorage.getItem('nexlance_allocations');
+    return saved ? JSON.parse(saved) : INITIAL_ALLOCATIONS;
+  });
+
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
+    const saved = localStorage.getItem('nexlance_activity_logs');
+    return saved ? JSON.parse(saved) : INITIAL_ACTIVITY_LOGS;
+  });
+
+  const [ptpRecords, setPtpRecords] = useState<PTPRecord[]>(() => {
+    const saved = localStorage.getItem('nexlance_ptp_records');
+    return saved ? JSON.parse(saved) : INITIAL_PTPS;
+  });
+
+  const [payments, setPayments] = useState<PaymentRecord[]>(() => {
+    const saved = localStorage.getItem('nexlance_payments');
+    return saved ? JSON.parse(saved) : INITIAL_PAYMENTS;
+  });
+
+  const [exceptions, setExceptions] = useState<ExceptionPayment[]>(() => {
+    const saved = localStorage.getItem('nexlance_exceptions');
+    return saved ? JSON.parse(saved) : INITIAL_EXCEPTIONS;
+  });
 
   useEffect(() => localStorage.setItem('nexlance_clients', JSON.stringify(clients)), [clients]);
   useEffect(() => localStorage.setItem('nexlance_batches', JSON.stringify(batches)), [batches]);

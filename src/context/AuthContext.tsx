@@ -1,15 +1,33 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User, AuditLogEntry } from '../types';
 import { INITIAL_USERS } from '../mock/initialData';
+import { verifyTOTPCode } from '../utils/totp';
+import { issueEmailOtp, verifyEmailOtp } from '../services/emailOtpService';
+import {
+  createBackendSession,
+  validateBackendSession,
+  revokeBackendSession,
+  revokeAllSessionsForUser,
+  getStoredSessionId,
+  clearStoredSessionId,
+} from '../services/sessionService';
 
 interface AuthContextType {
   currentUser: User;
   users: User[];
   isAuthenticated: boolean;
+  isEmailOtpVerified: boolean;
   isTotpVerified: boolean;
   mustChangePassword: boolean;
-  login: (email: string, pass: string) => { success: boolean; message: string; needPasswordReset?: boolean; needTotp?: boolean };
-  verifyTotp: (code: string) => boolean;
+  login: (email: string, pass: string) => Promise<{
+    success: boolean;
+    message: string;
+    needPasswordReset?: boolean;
+    needEmailOtp?: boolean;
+  }>;
+  sendEmailOtp: (email?: string) => Promise<{ success: boolean; message: string; resendAllowedAt?: number }>;
+  verifyEmailOtpCode: (code: string, targetEmail?: string) => Promise<{ success: boolean; message: string }>;
+  verifyTotp: (code: string) => Promise<boolean>;
   completePasswordReset: (newPass: string) => boolean;
   logout: () => void;
   switchUser: (userId: string) => void;
@@ -24,34 +42,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>(() => {
-    try {
-      const saved = localStorage.getItem('nexlance_users');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Ensure Karthik is founder in loaded data if exists
-          return parsed;
-        }
+    const saved = localStorage.getItem('nexlance_users');
+    let list = INITIAL_USERS;
+    if (saved) {
+      try {
+        const parsed: User[] = JSON.parse(saved);
+        list = parsed.map(u => {
+          if (u.agent_id === 'USR_FOUNDER') {
+            return { ...u, role: 'FOUNDER', name: 'Prabhudeva C (Founder & CEO)', email: 'prabhudeva.c@nexlance.co.in' };
+          }
+          if (u.agent_id !== 'USR_FOUNDER' && u.role === 'FOUNDER') {
+            return { ...u, role: 'OPS_MANAGER' };
+          }
+          return u;
+        });
+      } catch (e) {
+        list = INITIAL_USERS;
       }
-    } catch (e) {
-      console.error('Failed to parse saved users:', e);
     }
-    return INITIAL_USERS;
+    // Allowed agent emails
+    const allowedAgentEmails = new Set([
+      'prabhudeva.c@nexlance.co.in',
+      'chinnakotlaprabhudeva651@gmail.com',
+      'b.praveen@nexlance.co.in',
+      'chaithanya@nexlance.co.in',
+      'geetha.m@nexlance.co.in',
+      'kolatam.hemanth@nexlance.co.in',
+      'v.premchand@nexlance.co.in',
+      'k.prasad@nexlance.co.in',
+    ]);
+
+    // Filter list: Keep non-agents, and only keep allowed agents
+    list = list.filter(u => u.role !== 'AGENT' || allowedAgentEmails.has(u.email.toLowerCase()));
+
+    // Merge any missing agents from INITIAL_USERS
+    INITIAL_USERS.forEach(initUser => {
+      if (!list.some(u => u.email.toLowerCase() === initUser.email.toLowerCase())) {
+        list.push(initUser);
+      }
+    });
+
+    return list;
   });
 
   const [currentUser, setCurrentUser] = useState<User>(() => {
-    try {
-      const savedId = localStorage.getItem('nexlance_current_user_id');
-      const found = users?.find(u => u?.agent_id === savedId);
-      if (found) return found;
-    } catch (e) {
-      console.error('Failed to parse current user:', e);
-    }
-    return users?.[0] || INITIAL_USERS[0];
+    const savedId = localStorage.getItem('nexlance_current_user_id');
+    const found = users.find(u => u.agent_id === savedId);
+    return found || users[0]; // Default Founder
   });
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
-  const [isTotpVerified, setIsTotpVerified] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isEmailOtpVerified, setIsEmailOtpVerified] = useState<boolean>(false);
+  const [isTotpVerified, setIsTotpVerified] = useState<boolean>(false);
   const [mustChangePassword, setMustChangePassword] = useState<boolean>(false);
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
@@ -72,23 +114,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('nexlance_audit_logs', JSON.stringify(auditLogs));
   }, [auditLogs]);
 
-  // Idle session timeout (30 mins simulated)
+  // Session validation on initial mount
+  useEffect(() => {
+    let isMounted = true;
+    const sId = getStoredSessionId();
+    if (!sId) {
+      setIsAuthenticated(false);
+      setIsEmailOtpVerified(false);
+      setIsTotpVerified(false);
+      return;
+    }
+
+    validateBackendSession(sId).then((res) => {
+      if (!isMounted) return;
+      if (res.valid) {
+        const userId = res.user?.userId || (JSON.parse(localStorage.getItem('nexlance_local_session') || '{}')).userId;
+        const found = users.find(u => u.agent_id === userId);
+        if (found && found.active_flag) {
+          setCurrentUser(found);
+          setIsAuthenticated(true);
+          setIsEmailOtpVerified(true);
+          setIsTotpVerified(true);
+        } else {
+          clearStoredSessionId();
+          setIsAuthenticated(false);
+          setIsEmailOtpVerified(false);
+          setIsTotpVerified(false);
+        }
+      } else {
+        clearStoredSessionId();
+        setIsAuthenticated(false);
+        setIsEmailOtpVerified(false);
+        setIsTotpVerified(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [users]);
+
+  // Idle session timeout (30 mins)
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const resetTimer = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        setIsAuthenticated(false);
-        setIsTotpVerified(false);
-        addAuditLog({
-          user_id: currentUser.agent_id,
-          action_type: 'LOGOUT',
-          entity: 'session',
-          entity_id: currentUser.agent_id,
-          old_value: 'Active',
-          new_value: 'Idle Timeout (30 min)',
-        });
-      }, 30 * 60 * 1000);
+      if (isAuthenticated && isTotpVerified) {
+        timer = setTimeout(async () => {
+          const sId = getStoredSessionId();
+          if (sId) await revokeBackendSession(sId);
+          else clearStoredSessionId();
+          setIsAuthenticated(false);
+          setIsEmailOtpVerified(false);
+          setIsTotpVerified(false);
+          addAuditLog({
+            user_id: currentUser.agent_id,
+            action_type: 'LOGOUT',
+            entity: 'session',
+            entity_id: currentUser.agent_id,
+            old_value: 'Active',
+            new_value: 'Idle Timeout (30 min)',
+          });
+        }, 30 * 60 * 1000);
+      }
     };
 
     window.addEventListener('mousemove', resetTimer);
@@ -100,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('mousemove', resetTimer);
       window.removeEventListener('keydown', resetTimer);
     };
-  }, [currentUser]);
+  }, [currentUser, isAuthenticated, isTotpVerified]);
 
   const addAuditLog = (entry: Omit<AuditLogEntry, 'log_id' | 'timestamp' | 'ip_address'>) => {
     const newLog: AuditLogEntry = {
@@ -112,7 +200,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuditLogs(prev => [newLog, ...prev]);
   };
 
-  const login = (email: string, pass: string) => {
+  const sendEmailOtp = async (targetEmail?: string) => {
+    const emailToUse = targetEmail || currentUser.email;
+    return await issueEmailOtp(emailToUse);
+  };
+
+  const verifyEmailOtpCode = async (code: string, targetEmail?: string) => {
+    const emailToUse = targetEmail || currentUser.email;
+    const res = await verifyEmailOtp(emailToUse, code);
+    if (res.success) {
+      setIsEmailOtpVerified(true);
+      addAuditLog({
+        user_id: currentUser.agent_id,
+        action_type: 'LOGIN',
+        entity: 'email_otp',
+        entity_id: currentUser.agent_id,
+        new_value: `Email OTP verified successfully for ${emailToUse}`,
+      });
+    }
+    return res;
+  };
+
+  const login = async (email: string, pass: string) => {
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) {
       return { success: false, message: 'Invalid email or password.' };
@@ -146,22 +255,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     setIsAuthenticated(true);
+    setIsEmailOtpVerified(false);
     setIsTotpVerified(false);
-    
+
+    await issueEmailOtp(user.email);
+
     addAuditLog({
       user_id: user.agent_id,
       action_type: 'LOGIN',
       entity: 'auth',
       entity_id: user.agent_id,
-      new_value: `Successful password login (${user.role})`,
+      new_value: `Successful password login (${user.role}). Mandatory Email OTP verification required.`,
     });
 
-    return { success: true, message: 'Password accepted. Mandatory TOTP required.', needTotp: true };
+    return {
+      success: true,
+      message: 'Password accepted. Mandatory Email OTP verification required.',
+      needEmailOtp: true,
+    };
   };
 
-  const verifyTotp = (code: string) => {
-    if (code.length === 6 && /^\d+$/.test(code)) {
+  const verifyTotp = async (code: string): Promise<boolean> => {
+    if (!isEmailOtpVerified) {
+      return false;
+    }
+    const userSecret = currentUser.totp_secret || 'NEXLANCEAUTHKEY2';
+    const isValid = await verifyTOTPCode(code, userSecret);
+    if (isValid) {
+      await createBackendSession(currentUser.agent_id, currentUser.email, currentUser.role);
       setIsTotpVerified(true);
+      setIsAuthenticated(true);
       addAuditLog({
         user_id: currentUser.agent_id,
         action_type: 'LOGIN',
@@ -182,7 +305,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const sId = getStoredSessionId();
+    if (sId) {
+      await revokeBackendSession(sId);
+    } else {
+      clearStoredSessionId();
+    }
     addAuditLog({
       user_id: currentUser.agent_id,
       action_type: 'LOGOUT',
@@ -192,60 +321,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       new_value: 'Explicit User Logout',
     });
     setIsAuthenticated(false);
+    setIsEmailOtpVerified(false);
     setIsTotpVerified(false);
   };
 
   const switchUser = (userId: string) => {
     const target = users.find(u => u.agent_id === userId);
     if (target) {
+      if (!target.active_flag) {
+        alert('Cannot switch: User account is disabled by Admin.');
+        return;
+      }
       setCurrentUser(target);
-      setIsAuthenticated(true);
-      setIsTotpVerified(true);
-      setMustChangePassword(false);
+      setIsEmailOtpVerified(false);
+      setIsTotpVerified(false);
       addAuditLog({
         user_id: target.agent_id,
         action_type: 'LOGIN',
-        entity: 'role_switch',
+        entity: 'session',
         entity_id: target.agent_id,
-        new_value: `Switched demo view to user ${target.name} (${target.role})`,
+        new_value: `Switched session to ${target.name} (${target.role}) - Email OTP & TOTP 2FA required`,
       });
     }
   };
 
-  const disableUser = (userId: string, adminId: string) => {
+  const disableUser = async (userId: string, adminId: string) => {
     setUsers(prev => prev.map(u => u.agent_id === userId ? { ...u, active_flag: false } : u));
+    await revokeAllSessionsForUser(userId);
     addAuditLog({
       user_id: adminId,
       action_type: 'DISABLE_USER',
       entity: 'users',
       entity_id: userId,
-      old_value: 'active_flag: true',
-      new_value: 'active_flag: false (Session Terminated Immediately)',
+      new_value: 'Account disabled & active sessions terminated',
     });
+
     if (currentUser.agent_id === userId) {
-      logout();
+      clearStoredSessionId();
+      setIsAuthenticated(false);
+      setIsEmailOtpVerified(false);
+      setIsTotpVerified(false);
     }
   };
 
   const unlockUser = (userId: string, adminId: string) => {
-    setUsers(prev => prev.map(u => u.agent_id === userId ? { ...u, is_locked: false, failed_logins: 0 } : u));
+    setUsers(prev => prev.map(u => u.agent_id === userId ? { ...u, failed_logins: 0, is_locked: false } : u));
     addAuditLog({
       user_id: adminId,
       action_type: 'UNLOCK_USER',
       entity: 'users',
       entity_id: userId,
-      old_value: 'is_locked: true',
-      new_value: 'is_locked: false',
+      new_value: 'Unlocked account after 5 failed login lockouts',
     });
   };
 
   const createUser = (newUser: Omit<User, 'agent_id'>, adminId: string) => {
     const created: User = {
       ...newUser,
-      agent_id: `USR_${Date.now()}`,
-      first_login: true,
-      totp_enabled: true,
+      agent_id: `AGT_${Date.now()}`,
       active_flag: true,
+      first_login: true,
+      failed_logins: 0,
+      is_locked: false,
     };
     setUsers(prev => [...prev, created]);
     addAuditLog({
@@ -263,9 +400,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser,
         users,
         isAuthenticated,
+        isEmailOtpVerified,
         isTotpVerified,
         mustChangePassword,
         login,
+        sendEmailOtp,
+        verifyEmailOtpCode,
         verifyTotp,
         completePasswordReset,
         logout,

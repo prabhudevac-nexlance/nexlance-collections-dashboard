@@ -188,8 +188,7 @@ export const UsersPage: React.FC = () => {
                     <option value="AGENT">Agent</option>
                     <option value="TEAM_LEADER">Team Leader</option>
                     <option value="OPS_MANAGER">Ops Manager</option>
-                    <option value="AUDITOR">Auditor</option>
-                    <option value="FOUNDER">Founder</option>
+                    <option value="AUDITOR">Auditor (Read Only)</option>
                   </select>
                 </div>
 

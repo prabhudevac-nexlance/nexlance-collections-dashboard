@@ -13,8 +13,6 @@ import { ClientsPage } from './pages/ClientsPage';
 import { UsersPage } from './pages/UsersPage';
 import { AuditorDashboard } from './components/dashboards/AuditorDashboard';
 
-import { ErrorBoundary } from './components/common/ErrorBoundary';
-
 const MainLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
@@ -57,12 +55,10 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <DataProvider>
-          <MainLayout />
-        </DataProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <DataProvider>
+        <MainLayout />
+      </DataProvider>
+    </AuthProvider>
   );
 }

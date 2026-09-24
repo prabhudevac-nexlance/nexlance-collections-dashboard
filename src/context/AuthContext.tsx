@@ -119,29 +119,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let isMounted = true;
     const sId = getStoredSessionId();
     if (!sId) {
+      console.log('[Auth Context] No stored session ID found on mount -> login required');
       setIsAuthenticated(false);
       setIsEmailOtpVerified(false);
       setIsTotpVerified(false);
       return;
     }
 
+    console.log('[Auth Context] Validating stored session on mount...');
     validateBackendSession(sId).then((res) => {
       if (!isMounted) return;
       if (res.valid) {
         const userId = res.user?.userId || (JSON.parse(localStorage.getItem('nexlance_local_session') || '{}')).userId;
         const found = users.find(u => u.agent_id === userId);
         if (found && found.active_flag) {
+          console.log(`[Auth Context] Valid session restored for user: ${found.name} (${found.agent_id})`);
           setCurrentUser(found);
           setIsAuthenticated(true);
           setIsEmailOtpVerified(true);
           setIsTotpVerified(true);
         } else {
+          console.log('[Auth Context] User not found or inactive -> clearing session');
           clearStoredSessionId();
           setIsAuthenticated(false);
           setIsEmailOtpVerified(false);
           setIsTotpVerified(false);
         }
       } else {
+        console.log('[Auth Context] Session validation failed or expired -> clearing session');
         clearStoredSessionId();
         setIsAuthenticated(false);
         setIsEmailOtpVerified(false);
@@ -152,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       isMounted = false;
     };
-  }, [users]);
+  }, []);
 
   // Idle session timeout (30 mins)
   useEffect(() => {
@@ -277,12 +282,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyTotp = async (code: string): Promise<boolean> => {
     if (!isEmailOtpVerified) {
+      console.log('[Auth Context] verifyTotp rejected: Email OTP not yet verified');
       return false;
     }
     const userSecret = currentUser.totp_secret || 'NEXLANCEAUTHKEY2';
+    console.log(`[Auth Context] Verifying TOTP for user: ${currentUser.agent_id}`);
     const isValid = await verifyTOTPCode(code, userSecret);
     if (isValid) {
+      console.log(`[Auth Context] TOTP valid. Creating session for user: ${currentUser.agent_id}`);
       await createBackendSession(currentUser.agent_id, currentUser.email, currentUser.role);
+      setIsEmailOtpVerified(true);
       setIsTotpVerified(true);
       setIsAuthenticated(true);
       addAuditLog({
@@ -292,8 +301,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         entity_id: currentUser.agent_id,
         new_value: 'TOTP 2FA verified successfully',
       });
+      console.log(`[Auth Context] Login complete. Dashboard unlocked for user: ${currentUser.agent_id}`);
       return true;
     }
+    console.log('[Auth Context] TOTP verification failed: Invalid code');
     return false;
   };
 

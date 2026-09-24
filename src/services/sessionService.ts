@@ -101,6 +101,7 @@ export async function validateBackendSession(
   isUserDisabledLocally: boolean = false
 ): Promise<SessionValidationResult> {
   if (isUserDisabledLocally) {
+    console.log('[Session Debug] Account disabled locally -> revoking session');
     clearStoredSessionId();
     return {
       valid: false,
@@ -110,6 +111,7 @@ export async function validateBackendSession(
   }
 
   const now = Date.now();
+  console.log('[Session Debug] Validating session ID...');
 
   // 1. Try server-side validation via /api/session
   try {
@@ -124,31 +126,39 @@ export async function validateBackendSession(
 
     if (res.ok) {
       const data = await res.json();
-      if (data.valid) {
+      if (data.valid && data.session) {
+        console.log(`[Session Debug] Server session valid for user: ${data.session.userId}`);
         // Update local session timestamp
         const saved = localStorage.getItem('nexlance_local_session');
         if (saved) {
-          const rec: LocalSessionRecord = JSON.parse(saved);
-          rec.lastActiveAt = now;
-          localStorage.setItem('nexlance_local_session', JSON.stringify(rec));
+          try {
+            const rec: LocalSessionRecord = JSON.parse(saved);
+            rec.lastActiveAt = now;
+            localStorage.setItem('nexlance_local_session', JSON.stringify(rec));
+          } catch (e) {
+            // Ignore JSON parse errors
+          }
         }
         return { valid: true, user: data.session };
-      } else {
-        clearStoredSessionId();
-        return {
-          valid: false,
-          message: data.message,
-          reason: data.reason || 'NOT_FOUND',
-        };
       }
+    } else if (res.status === 403) {
+      // Explicitly revoked / disabled by administrator
+      console.log('[Session Debug] Session revoked by administrator (403)');
+      clearStoredSessionId();
+      return {
+        valid: false,
+        message: 'Account disabled or session revoked by Administrator',
+        reason: 'REVOKED',
+      };
     }
-  } catch (e) {
-    // Handled silently
+  } catch (e: any) {
+    console.warn(`[Session Debug] Backend session API fetch exception: ${e.message}`);
   }
 
   // 2. Client-side fallback session verification (enforcing strict PRD limits)
   const saved = localStorage.getItem('nexlance_local_session');
   if (!saved) {
+    console.log('[Session Debug] No local session record found');
     clearStoredSessionId();
     return { valid: false, message: 'Session not found', reason: 'NOT_FOUND' };
   }
@@ -156,12 +166,14 @@ export async function validateBackendSession(
   try {
     const rec: LocalSessionRecord = JSON.parse(saved);
     if (rec.sessionId !== sessionId) {
+      console.log('[Session Debug] Local session ID mismatch');
       clearStoredSessionId();
       return { valid: false, message: 'Invalid session ID', reason: 'NOT_FOUND' };
     }
 
     // Check 24-hour hard expiry
     if (now - rec.createdAt > MAX_LIFESPAN_MS) {
+      console.log('[Session Debug] Session hard-expired (24h lifespan limit reached)');
       clearStoredSessionId();
       return {
         valid: false,
@@ -172,6 +184,7 @@ export async function validateBackendSession(
 
     // Check 30-minute idle timeout
     if (now - rec.lastActiveAt > IDLE_TIMEOUT_MS) {
+      console.log('[Session Debug] Session expired due to 30m idle timeout');
       clearStoredSessionId();
       return {
         valid: false,
@@ -183,8 +196,17 @@ export async function validateBackendSession(
     // Refresh lastActiveAt timestamp
     rec.lastActiveAt = now;
     localStorage.setItem('nexlance_local_session', JSON.stringify(rec));
-    return { valid: true };
+    console.log(`[Session Debug] Session valid via local record verification for user: ${rec.userId}`);
+    return {
+      valid: true,
+      user: {
+        userId: rec.userId,
+        email: rec.email,
+        role: 'AGENT',
+      },
+    };
   } catch (e) {
+    console.log('[Session Debug] Corrupt local session data');
     clearStoredSessionId();
     return { valid: false, message: 'Corrupt session data', reason: 'NOT_FOUND' };
   }

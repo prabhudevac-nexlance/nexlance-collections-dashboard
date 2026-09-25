@@ -32,8 +32,10 @@ interface AuthContextType {
   logout: () => void;
   switchUser: (userId: string) => void;
   disableUser: (userId: string, adminId: string) => void;
+  enableUser: (userId: string, adminId: string) => void;
   unlockUser: (userId: string, adminId: string) => void;
-  createUser: (user: Omit<User, 'agent_id'>, adminId: string) => void;
+  createUser: (user: Partial<User> & { name: string; email: string; role: any }, adminId: string) => { success: boolean; message: string; user?: User };
+  updateUser: (user: User, adminId: string) => { success: boolean; message: string };
   addAuditLog: (entry: Omit<AuditLogEntry, 'log_id' | 'timestamp' | 'ip_address'>) => void;
   auditLogs: AuditLogEntry[];
 }
@@ -60,20 +62,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         list = INITIAL_USERS;
       }
     }
-    // Allowed user emails
-    const allowedEmails = new Set([
-      'prabhudeva.c@nexlance.co.in',
-      'karthick@nexlance.co.in',
-      'b.praveen@nexlance.co.in',
-      'chaithanya@nexlance.co.in',
-      'geetha.m@nexlance.co.in',
-      'kolatam.hemanth@nexlance.co.in',
-      'v.premchand@nexlance.co.in',
-      'k.prasad@nexlance.co.in',
+    // Blacklisted legacy demo emails
+    const blacklistedEmails = new Set([
+      'ops.lead@nexlance.in',
+      'tl.north@nexlance.in',
+      'tl.west@nexlance.in',
+      'auditor@nexlance.in',
+      'dev.lead@nexlance.in',
+      'dev.hari@nexlance.in',
+      'dev.shaik@nexlance.in',
+      'dev.sudharshan@nexlance.in',
     ]);
 
-    // Filter list: Keep only allowed users
-    list = list.filter(u => allowedEmails.has(u.email.toLowerCase()));
+    // Filter list: Exclude blacklisted legacy demo users
+    list = list.filter(u => !blacklistedEmails.has(u.email.toLowerCase()));
 
     // Merge any missing users from INITIAL_USERS
     INITIAL_USERS.forEach(initUser => {
@@ -375,6 +377,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const enableUser = (userId: string, adminId: string) => {
+    setUsers(prev => prev.map(u => u.agent_id === userId ? { ...u, active_flag: true } : u));
+    addAuditLog({
+      user_id: adminId,
+      action_type: 'UNLOCK_USER',
+      entity: 'users',
+      entity_id: userId,
+      new_value: 'Account re-enabled by admin',
+    });
+  };
+
   const unlockUser = (userId: string, adminId: string) => {
     setUsers(prev => prev.map(u => u.agent_id === userId ? { ...u, failed_logins: 0, is_locked: false } : u));
     addAuditLog({
@@ -386,23 +399,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const createUser = (newUser: Omit<User, 'agent_id'>, adminId: string) => {
+  const createUser = (newUser: Partial<User> & { name: string; email: string; role: any }, adminId: string) => {
+    const trimmedEmail = newUser.email.trim().toLowerCase();
+    const existingEmail = users.find(u => u.email.toLowerCase() === trimmedEmail);
+    if (existingEmail) {
+      return { success: false, message: `A user with email '${newUser.email}' already exists (${existingEmail.name}).` };
+    }
+
+    const customId = newUser.agent_id?.trim();
+    if (customId) {
+      const existingId = users.find(u => u.agent_id.toLowerCase() === customId.toLowerCase());
+      if (existingId) {
+        return { success: false, message: `User ID '${customId}' is already assigned to ${existingId.name}.` };
+      }
+    }
+
+    const generatedId = customId || (newUser.role === 'AGENT' ? `AGT_${Math.floor(1000 + Math.random() * 9000)}` : `USR_${Math.floor(1000 + Math.random() * 9000)}`);
+
     const created: User = {
-      ...newUser,
-      agent_id: `AGT_${Date.now()}`,
-      active_flag: true,
+      agent_id: generatedId,
+      name: newUser.name.trim(),
+      email: trimmedEmail,
+      role: newUser.role,
+      team_leader_id: newUser.team_leader_id || undefined,
+      client_ids_assigned: newUser.client_ids_assigned || ['CLI_KISSHT', 'CLI_HDFC', 'CLI_BAJAJ'],
+      doj: newUser.doj || new Date().toISOString().split('T')[0],
+      active_flag: newUser.active_flag !== undefined ? newUser.active_flag : true,
       first_login: true,
       failed_logins: 0,
       is_locked: false,
+      totp_enabled: true,
+      totp_secret: 'NEXLANCEAUTHKEY2',
     };
+
     setUsers(prev => [...prev, created]);
     addAuditLog({
       user_id: adminId,
       action_type: 'CLIENT_CREATED',
       entity: 'users',
       entity_id: created.agent_id,
-      new_value: `Created user ${created.name} (${created.role}) with forced password change`,
+      new_value: `Created user ${created.name} (${created.role}, ${created.email}) with ID ${created.agent_id}`,
     });
+
+    return { success: true, message: `User ${created.name} (${created.agent_id}) created successfully!`, user: created };
+  };
+
+  const updateUser = (updatedUser: User, adminId: string) => {
+    const existingIndex = users.findIndex(u => u.agent_id === updatedUser.agent_id);
+    if (existingIndex === -1) {
+      return { success: false, message: `User ID ${updatedUser.agent_id} not found.` };
+    }
+
+    const duplicateEmail = users.find(u => u.agent_id !== updatedUser.agent_id && u.email.toLowerCase() === updatedUser.email.toLowerCase());
+    if (duplicateEmail) {
+      return { success: false, message: `Email '${updatedUser.email}' is already used by ${duplicateEmail.name}.` };
+    }
+
+    setUsers(prev => prev.map(u => u.agent_id === updatedUser.agent_id ? updatedUser : u));
+
+    addAuditLog({
+      user_id: adminId,
+      action_type: 'CLIENT_CREATED',
+      entity: 'users',
+      entity_id: updatedUser.agent_id,
+      new_value: `Updated user details for ${updatedUser.name} (${updatedUser.role}, ${updatedUser.email})`,
+    });
+
+    if (currentUser.agent_id === updatedUser.agent_id) {
+      setCurrentUser(updatedUser);
+    }
+
+    return { success: true, message: `User ${updatedUser.name} updated successfully!` };
   };
 
   return (
@@ -422,8 +489,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         switchUser,
         disableUser,
+        enableUser,
         unlockUser,
         createUser,
+        updateUser,
         addAuditLog,
         auditLogs,
       }}
